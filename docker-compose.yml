@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: feedjson-redis
+    ports:
+      - "6379:6379"
+
+  feedjson:
+    build: .
+    container_name: feedjson-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      # rate-limit formatting: e.g. 1000 requests per hour
+      - RATE_LIMIT=1000-H
+      - ADMIN_SECRET=DulhanKiVidaaiKaWaqtBadalnaHai
+      - PORT=8080
