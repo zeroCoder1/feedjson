@@ -1,5 +1,10 @@
 # Gofi
 
+
+[#Play Here](https://feedjson-production.up.railway.app/docs/)
+
+
+---
 **Gofi** is a lightweight, high-performance RSS/Atom-to-JSON proxy service written in Go. It fetches any public feed URL, normalizes it into a simple JSON schema, and serves it via an HTTP API—with built-in Redis caching, per-token access control, and rate-limiting.
 
 ---
