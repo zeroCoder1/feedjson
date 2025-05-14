@@ -17,7 +17,8 @@ func main() {
 	cfg := config.LoadConfig()
 
 	// 2. Initialize Redis (for cache & rate-limiter store)
-	cache.InitRedis(cfg.RedisURL, "", 0)
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	cache.InitRedis(cfg.RedisURL, redisPassword, 0)
 	rdb := cache.GetClient()
 
 	if os.Getenv("ADMIN_SECRET") == "" {
