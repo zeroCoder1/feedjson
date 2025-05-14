@@ -1,4 +1,3 @@
-// cmd/feedjson/main.go
 package main
 
 import (
@@ -34,6 +33,9 @@ func main() {
 
 	// 4. Set up Gin router
 	r := gin.Default()
+
+	// Serve all files in ./web at /web (e.g. /web/index.html, /web/docs.html)
+	r.Static("/docs", "./docs")
 
 	// 4a. Enforce bearer token auth
 	// authMiddleware := auth.RequireAuth()

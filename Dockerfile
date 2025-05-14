@@ -1,3 +1,4 @@
+# ── Builder stage ──────────────────────────────────────────────────────────
 FROM golang:1.24-alpine AS builder
 
 RUN apk add --no-cache git
@@ -13,10 +14,13 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM alpine:3.18
 
-
 RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /feedjson /feedjson
+
+COPY --from=builder /src/docs /docs
+
+WORKDIR /
 
 EXPOSE 8080
 

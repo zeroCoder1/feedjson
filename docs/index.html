@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gofi API Demo</title>
+    <style>
+        /* Reset & basics */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: sans-serif;
+            line-height: 1.5;
+            color: #2e3440;
+            background: #f0f1f3;
+        }
+
+        a {
+            text-decoration: none;
+            color: #2e3440;
+        }
+
+        /* Navigation bar */
+        nav {
+            background: #fff;
+            border-bottom: 1px solid #ccc;
+            padding: 0.5rem 1rem;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: flex-end;
+            gap: 1.5rem;
+        }
+
+        nav li a {
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+        }
+
+        nav li a:hover {
+            background: #e2e4e6;
+            border-radius: 4px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 800px;
+            margin: 1.5rem auto;
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+            font-size: 1.75rem;
+            text-align: center;
+        }
+
+        form>div {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: bold;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #2e86de;
+            color: #fff;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            border: none;
+        }
+
+        button:hover {
+            background: #246fb1;
+        }
+
+        pre {
+            background: #2e3440;
+            color: #d8dee9;
+            padding: 1rem;
+            overflow: auto;
+            white-space: pre-wrap;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-family: monospace;
+        }
+
+        /* JSON syntax highlighting */
+        .string {
+            color: #a3be8c;
+        }
+
+        .number {
+            color: #b48ead;
+        }
+
+        .boolean {
+            color: #88c0d0;
+        }
+
+        .null {
+            color: #81a1c1;
+        }
+
+        .key {
+            color: #ebcb8b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Navigation -->
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="docs.html">Docs</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Demo Container -->
+    <div class="container">
+        <h1>Gofi API Demo</h1>
+        <form id="demo-form">
+            <div>
+                <label for="token">API Token</label>
+                <input type="text" id="token" placeholder="Paste your token here" required>
+            </div>
+            <div>
+                <label for="rss_url">RSS URL</label>
+                <input type="url" id="rss_url" placeholder="https://example.com/feed" required>
+            </div>
+            <div>
+                <label for="count">Item Count</label>
+                <input type="number" id="count" placeholder="e.g. 5" min="1">
+            </div>
+            <button type="submit">Fetch Feed</button>
+        </form>
+
+        <h2>Result</h2>
+        <pre id="output">Submit the form to see results here…</pre>
+    </div>
+
+    <script>
+        // Simple JSON syntax highlighter
+        function syntaxHighlight(json) {
+            json = json
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            return json.replace(
+                /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?\b)/g,
+                match => {
+                    let cls = 'number';
+                    if (/^"/.test(match)) {
+                        cls = /:$/.test(match) ? 'key' : 'string';
+                    } else if (/true|false/.test(match)) {
+                        cls = 'boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'null';
+                    }
+                    return `<span class="${cls}">${match}</span>`;
+                }
+            );
+        }
+
+        document.getElementById('demo-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const token = document.getElementById('token').value.trim();
+            const rss_url = document.getElementById('rss_url').value.trim();
+            const count = document.getElementById('count').value.trim();
+
+            const params = new URLSearchParams({ rss_url });
+            if (count) params.set('count', count);
+
+            const res = await fetch(`/v1/feed?${params}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const text = await res.text();
+
+            const out = document.getElementById('output');
+            if (res.ok) {
+                try {
+                    const obj = JSON.parse(text);
+                    out.innerHTML = syntaxHighlight(JSON.stringify(obj, null, 2));
+                } catch {
+                    out.textContent = text;
+                }
+            } else {
+                out.textContent = `Error ${res.status}\n\n${text}`;
+            }
+        });
+    </script>
+</body>
+
+</html>

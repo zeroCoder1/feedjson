@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gofi API Documentation</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; line-height: 1.5; color: #2e3440; background: #f0f1f3; }
+        a { text-decoration: none; color: #2e3440; }
+        nav { background: #fff; border-bottom: 1px solid #ccc; padding: 0.5rem 1rem; }
+        nav ul { display: flex; list-style: none; justify-content: flex-end; gap: 1.5rem; }
+        nav li a { font-weight: bold; padding: 0.25rem 0.5rem; }
+        nav li a:hover { background: #e2e4e6; border-radius: 4px; }
+        .container { max-width: 800px; margin: 1.5rem auto; background: #fff; padding: 1.5rem; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        h1 { margin-bottom: 1rem; font-size: 1.75rem; text-align: center; }
+        h2 { margin-top: 2rem; margin-bottom: 0.5rem; }
+        h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        p { margin-bottom: 1rem; }
+        code, pre { font-family: monospace; }
+        pre {
+            background: #2e3440;
+            color: #d8dee9;
+            padding: 1rem;
+            overflow: auto;
+            white-space: pre-wrap;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-family: monospace;
+        }
+        table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+        th { background: #f7f7f7; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        .endpoint { font-family: monospace; background: #e2e4e6; padding: 0.2em 0.5em; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="docs.html">Docs</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1>Gofi API Documentation</h1>
+        <p>
+            Gofi is a high-performance RSS/Atom-to-JSON proxy service.  
+            Use the endpoints below to issue tokens and fetch normalized feed data.
+        </p>
+
+        <h2>Authentication</h2>
+        <p>
+            All API requests require a valid <b>Bearer token</b> in the <code>Authorization</code> header.<br>
+            Obtain a token via the <span class="endpoint">POST /v1/tokens</span> endpoint (admin only).
+        </p>
+        <pre>
+Authorization: Bearer &lt;your-token&gt;
+        </pre>
+
+        <h2>Endpoints</h2>
+
+        <h3>1. <span class="endpoint">POST /v1/tokens</span> <small>(Admin only)</small></h3>
+        <p>
+            Issue a new API token. Requires <code>X-Admin-Token</code> header.
+        </p>
+        <b>Request:</b>
+        <pre>
+POST /v1/tokens
+X-Admin-Token: &lt;admin-secret&gt;
+        </pre>
+        <b>Response <small>(201 Created)</small>:</b>
+        <pre>
+{
+  "token": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+}
+        </pre>
+
+        <h3>2. <span class="endpoint">GET /v1/feed</span></h3>
+        <p>
+            Fetch and normalize an RSS/Atom feed as JSON.<br>
+            <b>Requires Bearer token and is rate-limited per token.</b>
+        </p>
+        <b>Query Parameters:</b>
+        <table>
+            <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+            <tr><td>rss_url</td><td>string</td><td><b>Required.</b> The feed URL to fetch.</td></tr>
+            <tr><td>count</td><td>integer</td><td>Optional. Max number of items to return.</td></tr>
+        </table>
+        <b>Request Example:</b>
+        <pre>
+GET /v1/feed?rss_url=https://blog.golang.org/feed.atom&amp;count=5
+Authorization: Bearer &lt;your-token&gt;
+        </pre>
+        <b>Response Example:</b>
+        <pre>
+{
+  "status": "ok",
+  "feed": {
+    "title": "Example Blog",
+    "link": "https://example.com",
+    "description": "An example feed",
+    "image": "https://example.com/logo.png",
+    "updated": "2025-05-13T10:00:00Z"
+  },
+  "items": [
+    {
+      "title": "Post title",
+      "link": "https://example.com/post",
+      "author": "Author Name",
+      "pubDate": "2025-05-12T08:30:00Z",
+      "content": "...",
+      "description": "...",
+      "categories": ["tag1","tag2"],
+      "enclosure": {
+        "url": "...", "type": "audio/mpeg", "length": "12345"
+      }
+    }
+    // ...
+  ]
+}
+        </pre>
+
+        <h2>Errors</h2>
+        <ul>
+            <li><b>401 Unauthorized</b> — Missing or invalid token</li>
+            <li><b>403 Forbidden</b> — Invalid admin secret (for token issuance)</li>
+            <li><b>429 Too Many Requests</b> — Rate limit exceeded</li>
+            <li><b>400 Bad Request</b> — Missing or invalid parameters</li>
+            <li><b>502 Bad Gateway</b> — Feed fetch/parse error</li>
+        </ul>
+
+        <h2>Environment Variables</h2>
+        <table>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+            <tr><td>REDIS_ADDR</td><td>localhost:6379</td><td>Redis server address</td></tr>
+            <tr><td>REDIS_PASSWORD</td><td>(empty)</td><td>Redis password</td></tr>
+            <tr><td>REDIS_DB</td><td>0</td><td>Redis DB index</td></tr>
+            <tr><td>RATE_LIMIT</td><td>1000-H</td><td>Requests per period (e.g. 100-H, 5000-D)</td></tr>
+            <tr><td>ADMIN_SECRET</td><td>(empty)</td><td>Secret for token issuance</td></tr>
+            <tr><td>PORT</td><td>8080</td><td>HTTP server port</td></tr>
+        </table>
+
+        <h2>Notes</h2>
+        <ul>
+            <li>All endpoints are under <code>/v1/</code>.</li>
+            <li>Feed responses are cached for 15 minutes.</li>
+            <li>Rate limiting is enforced per token.</li>
+        </ul>
+    </div>
+</body>
+</html>
